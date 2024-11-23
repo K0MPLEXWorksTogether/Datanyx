@@ -4,10 +4,10 @@ import joblib
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
 
-revenue_model = joblib.load('hackathon/Datanyx/models/regression/revenue_model_svm.joblib')
-profit_model = joblib.load('hackathon/Datanyx/models/regression/profit_model_svm.joblib')
+revenue_model = joblib.load('models/regression/revenue_model_svm.joblib')
+profit_model = joblib.load('models/regression/profit_model_svm.joblib')
 
-data = pd.read_csv('hackathon/Updated_final_dataset.csv')
+data = pd.read_csv('data/flowers_dataset_cleaned.csv')
 
 label_encoder = LabelEncoder()
 data['Flower Name'] = label_encoder.fit_transform(data['Flower Name'])

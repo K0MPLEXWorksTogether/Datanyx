@@ -3,7 +3,7 @@ import joblib
 from datetime import datetime
 
 # Load the pre-saved prediction summary
-prediction_summary = joblib.load('hackathon/Datanyx/models/regression/prediction_summary.joblib')
+prediction_summary = joblib.load('models/regression/prediction_summary.joblib')
 
 # Function to get predicted profit as dictionary based on start_date and end_date
 def get_predicted_profit(start_date: str, end_date: str):

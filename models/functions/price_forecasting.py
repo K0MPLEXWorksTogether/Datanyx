@@ -61,14 +61,3 @@ def generate_forecast_summary(days):
         })
     forecast_summary = pd.DataFrame(results)
     return forecast_summary
-
-days = int(input("Enter the number of days you want to predict for: "))
-
-best_flower_revenue, max_revenue, best_flower_profit, max_profit = find_best_flower(days)
-
-forecast_summary = generate_forecast_summary(days)
-print("\nForecast Summary:")
-print(forecast_summary)
-
-print(f"\nFor {days} days, the flower with the highest predicted revenue is '{best_flower_revenue}' with ₹{max_revenue:.2f}")
-print(f"The flower with the highest predicted profit is '{best_flower_profit}' with ₹{max_profit:.2f}")

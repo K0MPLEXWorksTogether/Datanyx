@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 revenue_model = joblib.load('models/regression/revenue_model_svm.joblib')
 profit_model = joblib.load('models/regression/profit_model_svm.joblib')
 
-data = pd.read_csv('data/flowers_dataset_cleaned.csv')
+data = pd.read_csv('hackathon/Updated_final_dataset.csv')
 
 label_encoder = LabelEncoder()
 data['Flower Name'] = label_encoder.fit_transform(data['Flower Name'])

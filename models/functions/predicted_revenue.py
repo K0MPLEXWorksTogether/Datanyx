@@ -5,10 +5,10 @@ from datetime import datetime
 from sklearn.preprocessing import LabelEncoder
 
 # Load the revenue model
-revenue_model = joblib.load('hackathon/revenue_model_svm.joblib')
+revenue_model = joblib.load('models/regression/revenue_model_svm.joblib')
 
 # Load dataset
-data = pd.read_csv("hackathon/flowers_dataset_cleaned.csv")
+data = pd.read_csv("data/flowers_dataset_cleaned.csv")
 
 # Encode flower names
 label_encoder = LabelEncoder()

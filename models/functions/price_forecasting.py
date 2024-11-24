@@ -4,10 +4,10 @@ import joblib
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
 
-revenue_model = joblib.load('hackathon/Datanyx/models/regression/revenue_model_svm.joblib')
-profit_model = joblib.load('hackathon/Datanyx/models/regression/profit_model_svm.joblib')
+revenue_model = joblib.load('models/regression/revenue_model_svm.joblib')
+profit_model = joblib.load('models/regression/profit_model_svm.joblib')
 
-data = pd.read_csv('hackathon/flowers_dataset_cleaned.csv')
+data = pd.read_csv('data/flowers_dataset_cleaned.csv')
 
 label_encoder = LabelEncoder()
 data['Flower Name'] = label_encoder.fit_transform(data['Flower Name'])
@@ -61,14 +61,3 @@ def generate_forecast_summary(days):
         })
     forecast_summary = pd.DataFrame(results)
     return forecast_summary
-
-days = int(input("Enter the number of days you want to predict for: "))
-
-best_flower_revenue, max_revenue, best_flower_profit, max_profit = find_best_flower(days)
-
-forecast_summary = generate_forecast_summary(days)
-print("\nForecast Summary:")
-print(forecast_summary)
-
-print(f"\nFor {days} days, the flower with the highest predicted revenue is '{best_flower_revenue}' with ₹{max_revenue:.2f}")
-print(f"The flower with the highest predicted profit is '{best_flower_profit}' with ₹{max_profit:.2f}")

@@ -5,9 +5,9 @@ from sklearn.preprocessing import LabelEncoder
 import joblib
 
 # File paths for the dataset and models
-dataset_path = "hackathon/flowers_dataset_cleaned.csv"
-revenue_model_path = "hackathon/revenue_model_svm.joblib"
-profit_model_path = "hackathon/profit_model_svm.joblib"
+dataset_path = "data/flowers_dataset_cleaned.csv"
+revenue_model_path = "models/regression/revenue_model_svm.joblib"
+profit_model_path = "models/regression/profit_model_svm.joblib"
 
 def analyze_flower(flower_name):
     """

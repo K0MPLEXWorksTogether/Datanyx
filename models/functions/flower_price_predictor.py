@@ -1,113 +1,90 @@
 import numpy as np
 import pandas as pd
-from tensorflow.keras.models import load_model
+from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 import joblib
 
-def predict_flower_prices_by_idx(idx, n_days, model_path="flower_price_predictor_model.keras", dataset_path="hackathon/flowers_dataset_cleaned.csv"):
+# Load necessary components
+def load_components():
+    data = pd.read_csv("hackathon/flowers_dataset_cleaned.csv")
+    label_encoder = joblib.load('hackathon/Datanyx/models/regression/label_encoder.joblib')
+    scaler_prices = joblib.load('hackathon/Datanyx/models/regression/scaler_prices.joblib')  # For scaling profit
+    return data, label_encoder, scaler_prices
+
+# Calculate daily profit for each flower (for demonstration, use the last 30 days)
+def calculate_daily_profit(data):
     """
-    Predict flower prices for the next `n_days` based on the flower's index `idx`.
-
-    Arguments:
-    - idx: Index of the flower in the dataset (integer).
-    - n_days: The number of days to forecast (integer).
-    - model_path: Path to the saved .keras model.
-    - dataset_path: Path to the flower dataset.
-
-    Returns:
-    - A dictionary with flower index and predicted prices.
+    Calculate the daily profit for each flower based on the last 30 days of data.
+    For simplicity, we'll assume profits vary slightly day by day.
     """
+    # Calculate daily profit as the average of MRP for each flower in the last 30 days
+    daily_profit_per_flower = data.groupby('Flower Name')['MRP (₹)'].rolling(30).mean().reset_index()
     
-    # Load the .keras model
-    model = load_model(model_path)
+    # Use the last available daily profit as the baseline profit for the next days
+    daily_profit_per_flower = daily_profit_per_flower.groupby('Flower Name').last()['MRP (₹)']
     
-    # Load the dataset
-    data = pd.read_csv(dataset_path)
-    
-    # Debug: Check the first few rows of the dataset
-    print("Dataset head:\n", data.head())
+    return daily_profit_per_flower
 
-    # Load the scalers and label encoder
-    scaler_features = joblib.load('scaler_features.joblib')
-    scaler_prices = joblib.load('scaler_prices.joblib')
-    label_encoder = joblib.load('label_encoder.joblib')
+# Forecast day-wise profit for a flower
+def forecast_daywise_profit(flower_id, n_days, data, label_encoder, daily_profit_per_flower):
+    """
+    Forecast the day-wise profit for a flower based on its name or ID and the number of days.
+    """
+    flower_names = data['Flower Name'].unique()
     
-    # Debug: Check label encoder classes
-    print("Label Encoder Classes:", label_encoder.classes_)
+    if isinstance(flower_id, int):  # Input is an index
+        if flower_id < 0 or flower_id >= len(flower_names):
+            raise ValueError(f"Invalid flower ID. Choose between 0 and {len(flower_names) - 1}.")
+        flower_name = flower_names[flower_id]
+    elif isinstance(flower_id, str):  # Input is a flower name
+        if flower_id not in flower_names:
+            raise ValueError(f"Flower name '{flower_id}' not found in dataset.")
+        flower_name = flower_id
+    else:
+        raise ValueError("Invalid flower identifier. Must be an integer ID or a string name.")
     
-    # Ensure the index is within the dataset bounds
-    if idx < 0 or idx >= len(data):
-        return {"error": f"Invalid index {idx}. Please choose a valid index."}
+    # Get the baseline daily profit for the flower
+    daily_profit = daily_profit_per_flower[flower_name]
     
-    # Get the flower name corresponding to the index
-    flower_name = data.iloc[idx]['Flower Name']
+    # Generate day-wise profit (we simulate slight fluctuations day-to-day)
+    daywise_profit = []
+    for day in range(1, n_days + 1):
+        fluctuation = np.random.normal(loc=0, scale=0.05)  # Simulate slight random fluctuation
+        day_profit = daily_profit * (1 + fluctuation)
+        daywise_profit.append(round(day_profit, 2))
     
-    # Encode the flower name
-    encoded_flower = label_encoder.transform([flower_name])[0]
-    print(f"Encoded flower name '{flower_name}' as {encoded_flower}")
+    # Format day-wise profit output
+    daywise_profit_output = "\n".join([f"Day {i+1} : ₹{profit}" for i, profit in enumerate(daywise_profit)])
     
-    # Filter the dataset for the selected flower
-    selected_flower_data = data[data['Flower Name'] == flower_name]
-    
-    # Debug: Check if the flower name is in the dataset
-    print(f"Data for flower: {flower_name}\n", selected_flower_data.head())
-    
-    # Preprocess the data (encode categorical features and normalize)
-    features = selected_flower_data.drop(columns=['Start DateTime', 'End DateTime', 'MRP (₹)', 'Flower Name'])
-    prices = selected_flower_data['MRP (₹)'].values.reshape(-1, 1)
-    
-    features_scaled = scaler_features.transform(features)
-    prices_scaled = scaler_prices.transform(prices)
-    
-    # Combine features and prices for sequence generation
-    selected_flower_combined = np.hstack([features_scaled, prices_scaled])
-    
-    # Function to create sequences for LSTM
-    def create_sequences(data, seq_length):
-        X = []
-        for i in range(len(data) - seq_length):
-            X.append(data[i:i + seq_length, :-1])  # Exclude target column (price)
-        return np.array(X)
-    
-    # Create sequences for the selected flower
-    sequence_length = 30  # Use the past 30 days to predict the next price
-    X_flower = create_sequences(selected_flower_combined, sequence_length)
-    
-    # Get the last sequence of the flower for prediction
-    last_sequence = X_flower[-1]  # Last sequence from the flower's data
-    
-    # Forecast prices
-    def forecast_prices(model, last_sequence, n_days):
-        predictions = []
-        current_sequence = last_sequence.copy()
-        for _ in range(n_days):
-            pred = model.predict(current_sequence[np.newaxis, :, :], verbose=0)
-            predictions.append(pred[0, 0])
-            new_step = np.hstack([current_sequence[-1, :-1], pred.flatten()])
-            current_sequence = np.vstack([current_sequence[1:], new_step])
-        return predictions
-    
-    # Predict future prices
-    predicted_prices_scaled = forecast_prices(model, last_sequence, n_days)
-    
-    # Rescale predictions to the original price range
-    predicted_prices = scaler_prices.inverse_transform([[p] for p in predicted_prices_scaled])[:, 0]
-    
-    # Return the results as a dictionary
     return {
-        "Flower Index": idx,
         "Flower Name": flower_name,
-        "Encoded Flower": encoded_flower,
-        "Forecasted Prices": [round(float(price), 2) for price in predicted_prices]
+        "Days": n_days,
+        "Day-wise Profits (₹)": daywise_profit_output
     }
 
-# Example usage:
-flower_idx = 10  # For example, flower index is 10
-n_days = 5  # Forecast for the next 5 days
-result = predict_flower_prices_by_idx(flower_idx, n_days)
-if "error" in result:
-    print(result["error"])
-else:
-    print(f"\nForecasted Prices for Flower Index {result['Flower Index']} ({result['Flower Name']}):")
-    print(f"Encoded Flower: {result['Encoded Flower']}")
-    for day, price in enumerate(result["Forecasted Prices"], 1):
-        print(f"Day {day}: ₹{price:.2f}")
+# Wrapper for external usage
+def predict_daywise_flower_profit(flower_id, n_days):
+    """
+    Wrapper function to predict day-wise flower profit for external usage.
+    """
+    data, label_encoder, scaler_prices = load_components()
+    daily_profit_per_flower = calculate_daily_profit(data)
+    
+    try:
+        result = forecast_daywise_profit(
+            flower_id=flower_id,
+            n_days=n_days,
+            data=data,
+            label_encoder=label_encoder,
+            daily_profit_per_flower=daily_profit_per_flower
+        )
+        return result
+    except Exception as e:
+        return {"Error": str(e)}
+
+# Example 1: Using flower index
+result = predict_daywise_flower_profit(flower_id=1, n_days=7)
+print(result["Day-wise Profits (₹)"])
+
+# Example 2: Using flower name
+result = predict_daywise_flower_profit(flower_id="Rose", n_days=7)
+print(result["Day-wise Profits (₹)"])

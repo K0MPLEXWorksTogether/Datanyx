@@ -5,10 +5,10 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 
 def load_models():
-    rf_model = joblib.load("flower_name_predictor_rf.pkl")
-    encoder = joblib.load("categorical_encoder.pkl")
-    scaler = joblib.load("numerical_scaler.pkl")
-    flower_encoder = joblib.load("flower_label_encoder.pkl")
+    rf_model = joblib.load("../regression/flower_name_predictor_rf.pkl")
+    encoder = joblib.load("../regression/categorical_encoder.pkl")
+    scaler = joblib.load("../regression/numerical_scaler.pkl")
+    flower_encoder = joblib.load("../regression/flower_label_encoder.pkl")
     return rf_model, encoder, scaler, flower_encoder
 
 def predict_flower(weather, qty_sold, mrp, customer_segment):

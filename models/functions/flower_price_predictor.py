@@ -5,9 +5,9 @@ import joblib
 
 # Load necessary components
 def load_components():
-    data = pd.read_csv("hackathon/flowers_dataset_cleaned.csv")
-    label_encoder = joblib.load('hackathon/Datanyx/models/regression/label_encoder.joblib')
-    scaler_prices = joblib.load('hackathon/Datanyx/models/regression/scaler_prices.joblib')  # For scaling profit
+    data = pd.read_csv("data/flowers_dataset_cleaned.csv")
+    label_encoder = joblib.load('models/regression/label_encoder.joblib')
+    scaler_prices = joblib.load('models/regression/scaler_prices.joblib')  # For scaling profit
     return data, label_encoder, scaler_prices
 
 # Calculate daily profit for each flower (for demonstration, use the last 30 days)
